@@ -237,3 +237,35 @@ jobs:
         if: failure() && contains('["failure"]', steps.run-bandit-sarif.outcome)
         run: |
           bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
+
+  mypy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - uses: install-pinned/uv@87c2872ebb798b99a5ada5669f99ec2680716ae5
+
+      - run: uv pip install --system .[lint]
+
+      - id: cache-mypy
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
+        with:
+          path: .mypy_cache
+          key: ${{ runner.os }}-mypy-${{ hashFiles('pyproject.toml') }}
+
+      - run: mypy .

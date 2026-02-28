@@ -1,15 +1,16 @@
+# -*- coding: utf-8 -*-
 """Tests for censusgeocode"""
 # This file is part of censusgeocode.
 # https://github.com/fitnr/censusgeocode
 
 # Licensed under the General Public License (version 3)
 # http://opensource.org/licenses/LGPL-3.0
-# Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
+# Copyright (c) 2015-7, Neil Freeman <contact@fakeisthenewreal.org>
 
 import unittest
-import warnings
 
 import vcr
+import warnings
 
 from censusgeocode import CensusGeocode
 from censusgeocode.censusgeocode import GeographyResult
@@ -57,8 +58,8 @@ class CensusGeoCodeTestCase(unittest.TestCase):
         try:
             assert results[0]["geographies"]["Counties"][0]["BASENAME"] == "District of Columbia"
         except AssertionError as e:
-            err_msg = str(results[0]["geographies"]["Counties"][0])
-            raise AssertionError(err_msg) from e
+            print(results[0]["geographies"]["Counties"][0])
+            raise AssertionError from e
 
         assert "Metropolitan Divisions" in results[0]["geographies"].keys()
         assert "Alaska Native Village Statistical Areas" in results[0]["geographies"].keys()
@@ -82,9 +83,9 @@ class CensusGeoCodeTestCase(unittest.TestCase):
             "1600 Pennsylvania Avenue NW", city="Washington", state="DC", zipcode="20500", returntype="geographies"
         )
 
-        self.assertEqual(result.input["benchmark"]["benchmarkName"], bmark)
-        self.assertEqual(result.input["vintage"]["vintageName"], vint)
-        self.assertEqual(result[0]["geographies"]["Census Tracts"][0]["GEOID"], "11001006202")
+        assert result.input["benchmark"]["benchmarkName"] == bmark
+        assert result.input["vintage"]["vintageName"] == vint
+        assert result[0]["geographies"]["Census Tracts"][0]["GEOID"] == "11001006202"
 
     @vcr.use_cassette("tests/fixtures/address-batch.yaml")
     def test_addressbatch(self):

@@ -284,4 +284,4 @@ jobs:
           path: .mypy_cache
           key: ${{ runner.os }}-mypy-${{ hashFiles('pyproject.toml') }}
 
-      - run: mypy .
+      - run: mypy src

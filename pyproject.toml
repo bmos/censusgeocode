@@ -21,3 +21,35 @@ docstring-code-line-length = 80
 [[tool.mypy.overrides]]
 module = ["requests_toolbelt.*"]
 follow_untyped_imports = true
+
+[tool.pytest]
+
+[tool.pytest.ini_options]
+addopts = "--cov"
+
+[tool.coverage]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = [
+    "src/censusgeocode/",
+]
+
+[tool.coverage.paths]
+source = [
+    "src/censusgeocode/",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "return NotImplemented",
+    "raise",
+    "if (False|TYPE_CHECKING)",
+    'if __name__ == "__main__":',
+    "main\\(\\)",
+    "logger.",
+]

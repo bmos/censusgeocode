@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Census Geocoder wrapper
+Census Geocoder wrapper.
 For details on the API, see:
 https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.pdf
 """
@@ -21,16 +21,18 @@ https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.pdf
 import csv
 import io
 import warnings
-from io import BufferedReader
 from pathlib import Path
-from typing import Literal, TextIO
+from typing import Dict, List, Literal, Optional, TextIO, Union, Any, Iterable
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 SearchType = Literal["onelineaddress", "address", "addressPR", "addressbatch", "coordinates"]
 ReturnType = Literal["geographies", "locations"]
-ResultType = dict[str, str | int | float]
+ResultType = Dict[str, Union[str, int, float, list]]
+
+DEFAULT_BENCHMARK = "Public_AR_Current"
+DEFAULT_VINTAGE = "Current_Current"
 
 
 class CensusGeocode:
@@ -65,7 +67,7 @@ class CensusGeocode:
         ],
     }
 
-    def __init__(self, benchmark: str = "Public_AR_Current", vintage: str = "Current_Current"):
+    def __init__(self, benchmark: str = DEFAULT_BENCHMARK, vintage: str = DEFAULT_VINTAGE):
         """
         Arguments:
             benchmark (str): A name that references the version of the locator to use.
@@ -85,14 +87,14 @@ class CensusGeocode:
     def _fetch(
         self,
         searchtype: SearchType,
-        fields: dict[
+        fields: Dict[
             Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
-            str | float,
+            Optional[Union[str, float]],
         ],
         *,
         returntype: ReturnType = "geographies",
         **kwargs,
-    ) -> list | dict:
+    ) -> Union[List, Dict]:
         """Fetch a response from the Geocoding API."""
         fields["vintage"] = self.vintage
         fields["benchmark"] = self.benchmark
@@ -119,24 +121,30 @@ class CensusGeocode:
             err_msg = "Unable to parse response from Census"
             raise ValueError(err_msg) from e
 
-    def coordinates(self, x: float, y: float, *, returntype: ReturnType = "geographies", **kwargs) -> list | dict:
+    def coordinates(self, x: float, y: float, *, returntype: ReturnType = "geographies", **kwargs) -> Union[List, Dict]:
         """Geocode a (lon, lat) coordinate."""
-        fields: dict[Literal["x", "y"], float] = {"x": x, "y": y}
+        fields: Dict[
+            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
+            Optional[Union[str, float]],
+        ] = {"x": x, "y": y}
 
         return self._fetch("coordinates", fields=fields, returntype=returntype, **kwargs)
 
     def address(
         self,
         street: str,
-        city: str | None = None,
-        state: str | None = None,
+        city: Optional[str] = None,
+        state: Optional[str] = None,
         *,
-        zip: str | None = None,
-        zipcode: str | None = None,
+        zip: Optional[str] = None,
+        zipcode: Optional[str] = None,
         **kwargs,
-    ) -> list | dict:
+    ) -> Union[List, Dict]:
         """Geocode an address."""
-        fields: dict[Literal["street", "city", "state", "zip"], str] = {
+        fields: Dict[
+            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
+            Optional[Union[str, float]],
+        ] = {
             "street": street,
             "city": city,
             "state": state,
@@ -145,11 +153,14 @@ class CensusGeocode:
 
         return self._fetch(searchtype="address", fields=fields, **kwargs)
 
-    def onelineaddress(self, address: str, **kwargs) -> list | dict:
+    def onelineaddress(self, address: str, **kwargs) -> Union[List, Dict]:
         """Geocode an an address passed as one string.
         e.g. "4600 Silver Hill Rd, Suitland, MD 20746"
         """
-        fields: dict[Literal["address"], str] = {
+        fields: Dict[
+            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
+            Optional[Union[str, float]],
+        ] = {
             "address": address,
         }
 
@@ -177,7 +188,7 @@ class CensusGeocode:
         See: https://geocoding.geo.census.gov/geocoder/vintages?form"""
         return self._vintage
 
-    def _parse_batch_result(self, data: str, returntype: ReturnType) -> list[ResultType]:
+    def _parse_batch_result(self, data: str, returntype: ReturnType) -> List[ResultType]:
         """Parse the batch address results returned from the Census Geocoding API"""
         try:
             fieldnames = self.batchfields[returntype]
@@ -205,13 +216,13 @@ class CensusGeocode:
 
     def _post_batch(
         self,
-        data: list[dict] | None = None,
-        f: TextIO | BufferedReader | None = None,
+        data: Optional[Iterable[Dict[str, Any]]] = None,
+        f: Optional[Union[io.IOBase, TextIO]] = None,
         *,
         leave_open: bool = False,
         returntype: ReturnType = "geographies",
         **kwargs,
-    ) -> list[ResultType]:
+    ) -> List[ResultType]:
         """Send batch address file to the Census Geocoding API"""
         url = self._geturl(searchtype="addressbatch", returntype=returntype)
 
@@ -227,7 +238,8 @@ class CensusGeocode:
                 writer.writerow(row)
                 if i == 10001:
                     warnings.warn(
-                        "Sending more than 10,000 records, the upper limit for the Census Geocoder. Request will likely fail"
+                        "Sending more than 10,000 records, the upper limit for the Census Geocoder."
+                        "Request will likely fail."
                     )
 
             f.seek(0)
@@ -247,38 +259,43 @@ class CensusGeocode:
                 return self._parse_batch_result(r.text, returntype)
 
         finally:
-            if not leave_open:
+            if f and not leave_open:
                 f.close()
 
-    def addressbatch(self, data: TextIO | str | Path | list[dict], **kwargs) -> list[ResultType]:
+    def addressbatch(self, data: Union[TextIO, str, Path, Iterable[Dict[str, str]]], **kwargs) -> List[ResultType]:
         """
         Send either a CSV file or data to the addressbatch API.
 
         According to the Census, "there is currently an upper limit of 10,000 records per batch file."
 
-        If a file, can either be a file-like with a `read()` method, or a `str` that's a path to the
-        file. Either way, it must have no header and have fields id,street,city,state,zip
+        * If a file, can either be a file-like with a `read()` method, or a `Path` object or
+          `str` that's a path to the file. Either way, it must have no header and have fields
+          id, street, city, state, and zip.
 
-        If data, should be an iterable of dicts with the above fields (although ID is optional).
+        * If data, should be an iterable of dicts with the above fields (although ID is optional).
         """
-        # Does data quack like a file handle?
-        if hasattr(data, "read"):
+        if isinstance(data, io.IOBase):
             return self._post_batch(f=data, leave_open=True, **kwargs)
 
-        # If it is a Path object or string, open the file as bytes
         if isinstance(data, (str, Path)):
-            f = open(data, "rb")  # No 'with' block here
+            if isinstance(data, str) and not Path(data).exists():
+                raise FileNotFoundError("File not found at path {str}")
+            f = open(data, "rb")
             return self._post_batch(f=f, leave_open=False, **kwargs)
 
-        # Otherwise, assume an iterable of dicts
-        return self._post_batch(data=data, leave_open=False, **kwargs)
+        if isinstance(data, Iterable):
+            return self._post_batch(data=data, leave_open=False, **kwargs)
+
+        raise TypeError(
+            f"Expected a file-like object, a path object or string, or a list of dicts; got {type(data).__name__}"
+        )
 
 
-class GeographyResult(dict):
+class GeographyResult(Dict):
     """Wrapper for geography objects returned by the Census Geocoding API"""
 
-    def __init__(self, data: dict[str, ResultType]) -> None:
-        self.input = data["result"].get("input", {})
+    def __init__(self, data: Dict[str, Any]) -> None:
+        self.input: Union[str, int, float, List, Dict] = data["result"].get("input", {})
         super().__init__(data["result"]["geographies"])
 
         # create float coordinate tuples
@@ -295,9 +312,9 @@ class GeographyResult(dict):
                     geo["INTPT"] = ()
 
 
-class AddressResult(list):
+class AddressResult(List):
     """Wrapper for address objects returned by the Census Geocoding API"""
 
-    def __init__(self, data: dict[str, ResultType]) -> None:
-        self.input = data["result"].get("input", {})
+    def __init__(self, data: Dict[str, Any]) -> None:
+        self.input: Union[str, int, float, List, Dict] = data["result"].get("input", {})
         super().__init__(data["result"]["addressMatches"])

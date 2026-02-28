@@ -80,7 +80,7 @@ class CensusGeocode:
         self._benchmark = benchmark
         self._vintage = vintage
 
-    def _geturl(self, searchtype: SearchType, returntype: ReturnType = "geographies") -> str:
+    def _geturl(self, searchtype: SearchType, returntype: Optional[ReturnType] = "geographies") -> str:
         """Construct an URL for the geocoder."""
         return self._url.format(returntype=returntype, searchtype=searchtype)
 
@@ -92,9 +92,9 @@ class CensusGeocode:
             Optional[Union[str, float]],
         ],
         *,
-        returntype: ReturnType = "geographies",
+        returntype: Optional[ReturnType] = "geographies",
         **kwargs,
-    ) -> Union[List, Dict]:
+    ) -> Union["AddressResult", "GeographyResult"]:
         """Fetch a response from the Geocoding API."""
         fields["vintage"] = self.vintage
         fields["benchmark"] = self.benchmark
@@ -121,7 +121,9 @@ class CensusGeocode:
             err_msg = "Unable to parse response from Census"
             raise ValueError(err_msg) from e
 
-    def coordinates(self, x: float, y: float, *, returntype: ReturnType = "geographies", **kwargs) -> Union[List, Dict]:
+    def coordinates(
+        self, x: float, y: float, *, returntype: Optional[ReturnType] = "geographies", **kwargs
+    ) -> Union["AddressResult", "GeographyResult"]:
         """Geocode a (lon, lat) coordinate."""
         fields: Dict[
             Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
@@ -139,7 +141,7 @@ class CensusGeocode:
         zip: Optional[str] = None,
         zipcode: Optional[str] = None,
         **kwargs,
-    ) -> Union[List, Dict]:
+    ) -> Union["AddressResult", "GeographyResult"]:
         """Geocode an address."""
         fields: Dict[
             Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
@@ -153,7 +155,7 @@ class CensusGeocode:
 
         return self._fetch(searchtype="address", fields=fields, **kwargs)
 
-    def onelineaddress(self, address: str, **kwargs) -> Union[List, Dict]:
+    def onelineaddress(self, address: str, **kwargs) -> Union["AddressResult", "GeographyResult"]:
         """Geocode an an address passed as one string.
         e.g. "4600 Silver Hill Rd, Suitland, MD 20746"
         """
@@ -262,7 +264,9 @@ class CensusGeocode:
             if f and not leave_open:
                 f.close()
 
-    def addressbatch(self, data: Union[TextIO, str, Path, Iterable[Dict[str, str]]], **kwargs) -> List[ResultType]:
+    def addressbatch(
+        self, data: Union[TextIO, str, Path, Iterable[Dict[str, Any]]], **kwargs
+    ) -> List[ResultType]:
         """
         Send either a CSV file or data to the addressbatch API.
 
@@ -274,7 +278,7 @@ class CensusGeocode:
 
         * If data, should be an iterable of dicts with the above fields (although ID is optional).
         """
-        if isinstance(data, io.IOBase):
+        if isinstance(data, (io.IOBase, TextIO)):
             return self._post_batch(f=data, leave_open=True, **kwargs)
 
         if isinstance(data, (str, Path)):

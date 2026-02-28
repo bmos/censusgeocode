@@ -23,7 +23,7 @@ from . import __version__
 from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode
 
 
-def main():
+def main() -> None:
     """Command-line interface for censusgeocode"""
     parser = argparse.ArgumentParser("censusgeocode", description="Command-line interface for the Census Geocoding API")
 

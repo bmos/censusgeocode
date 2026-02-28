@@ -1,4 +1,9 @@
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/censusgeocode)](https://pypi.org/project/censusgeocode/)
+[![PyPI](https://img.shields.io/pypi/v/censusgeocode?color=blue)](https://pypi.org/project/censusgeocode/)
+[![Build, test, & publish](https://github.com/fitnr/censusgeocode/actions/workflows/pub lish.yml/badge.svg)](https://github.com/fitnr/censusgeocode/actions/workflows/publish.yml)
 [![Test package](https://github.com/fitnr/censusgeocode/actions/workflows/test.yml/badge.svg)](https://github.com/fitnr/censusgeocode/actions/workflows/test.yml)
+[![Coverage badge](https://raw.githubusercontent.com/fitnr/censusgeocode/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/fitnr/censusgeocode/blob/python-coverage-comment-action-data/htmlcov/index.html)
+
 
 # Census Geocode
 

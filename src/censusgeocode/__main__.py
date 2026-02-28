@@ -20,7 +20,7 @@ import io
 import sys
 
 from . import __version__
-from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode
+from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode, DEFAULT_TIMEOUT
 
 
 def main() -> None:
@@ -60,18 +60,18 @@ def main() -> None:
         "--timeout",
         metavar="SECONDS",
         type=int,
-        default=12,
-        help="Request timeout [default: 12]",
+        default=DEFAULT_TIMEOUT,
+        help=f"Request timeout [default: {DEFAULT_TIMEOUT}]",
     )
 
     args = parser.parse_args()
     cg = CensusGeocode(benchmark=args.benchmark, vintage=args.vintage)
 
     if args.address:
-        result = cg.onelineaddress(args.address, returntype=args.rettype, timeout=args.timeout)
+        search_result = cg.onelineaddress(args.address, returntype=args.rettype, timeout=args.timeout)
 
         try:
-            print("{},{}".format(result[0]["coordinates"]["x"], result[0]["coordinates"]["y"]))
+            print("{},{}".format(search_result[0]["coordinates"]["x"], search_result[0]["coordinates"]["y"]))
 
         except IndexError:
             print(f"Address not found: {args.address}", file=sys.stderr)
@@ -87,13 +87,13 @@ def main() -> None:
         else:
             infile = args.csv
 
-        result = cg.addressbatch(infile, returntype=args.rettype, timeout=args.timeout)
+        csv_result = cg.addressbatch(infile, returntype=args.rettype, timeout=args.timeout)
 
         fieldnames = cg.batchfields[args.rettype] + ["lat", "lon"]
         fieldnames.pop(fieldnames.index("coordinate"))
         writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(result)
+        writer.writerows(csv_result)
 
     else:
         print("Address or csv file required", file=sys.stderr)

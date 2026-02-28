@@ -33,6 +33,7 @@ ResultType = Dict[str, Union[str, int, float, list]]
 
 DEFAULT_BENCHMARK = "Public_AR_Current"
 DEFAULT_VINTAGE = "Current_Current"
+DEFAULT_TIMEOUT = 12
 
 
 class CensusGeocode:
@@ -93,6 +94,7 @@ class CensusGeocode:
         ],
         *,
         returntype: Optional[ReturnType] = "geographies",
+        timeout: Optional[int] = DEFAULT_TIMEOUT,
         **kwargs,
     ) -> Union["AddressResult", "GeographyResult"]:
         """Fetch a response from the Geocoding API."""
@@ -107,7 +109,7 @@ class CensusGeocode:
         url = self._geturl(searchtype=searchtype, returntype=returntype)
 
         try:
-            with requests.get(url, params=fields, timeout=kwargs.get("timeout")) as r:
+            with requests.get(url, params=fields, timeout=timeout) as r:
                 content = r.json()
                 if "addressMatches" in content.get("result", {}):
                     return AddressResult(content)
@@ -140,6 +142,7 @@ class CensusGeocode:
         *,
         zip: Optional[str] = None,
         zipcode: Optional[str] = None,
+        timeout: Optional[int] = DEFAULT_TIMEOUT,
         **kwargs,
     ) -> Union["AddressResult", "GeographyResult"]:
         """Geocode an address."""
@@ -153,7 +156,7 @@ class CensusGeocode:
             "zip": zip or zipcode,
         }
 
-        return self._fetch(searchtype="address", fields=fields, **kwargs)
+        return self._fetch(searchtype="address", fields=fields, timeout=timeout, **kwargs)
 
     def onelineaddress(self, address: str, **kwargs) -> Union["AddressResult", "GeographyResult"]:
         """Geocode an an address passed as one string.
@@ -223,6 +226,7 @@ class CensusGeocode:
         *,
         leave_open: bool = False,
         returntype: ReturnType = "geographies",
+        timeout: Optional[int] = DEFAULT_TIMEOUT,
         **kwargs,
     ) -> List[ResultType]:
         """Send batch address file to the Census Geocoding API"""
@@ -256,7 +260,7 @@ class CensusGeocode:
             )
             headers = {"Content-Type": form.content_type}
 
-            with requests.post(url, data=form, timeout=kwargs.get("timeout"), headers=headers) as r:
+            with requests.post(url, data=form, timeout=timeout, headers=headers) as r:
                 # return as list of dicts
                 return self._parse_batch_result(r.text, returntype)
 
@@ -265,7 +269,7 @@ class CensusGeocode:
                 f.close()
 
     def addressbatch(
-        self, data: Union[TextIO, str, Path, Iterable[Dict[str, Any]]], **kwargs
+        self, data: Union[TextIO, str, Path, Iterable[Dict[str, Any]]], *, timeout: Optional[int] = None, **kwargs
     ) -> List[ResultType]:
         """
         Send either a CSV file or data to the addressbatch API.
@@ -279,16 +283,16 @@ class CensusGeocode:
         * If data, should be an iterable of dicts with the above fields (although ID is optional).
         """
         if isinstance(data, (io.IOBase, TextIO)):
-            return self._post_batch(f=data, leave_open=True, **kwargs)
+            return self._post_batch(f=data, leave_open=True, timeout=timeout, **kwargs)
 
         if isinstance(data, (str, Path)):
             if isinstance(data, str) and not Path(data).exists():
                 raise FileNotFoundError("File not found at path {str}")
             f = open(data, "rb")
-            return self._post_batch(f=f, leave_open=False, **kwargs)
+            return self._post_batch(f=f, leave_open=False, timeout=timeout, **kwargs)
 
         if isinstance(data, Iterable):
-            return self._post_batch(data=data, leave_open=False, **kwargs)
+            return self._post_batch(data=data, leave_open=False, timeout=timeout, **kwargs)
 
         raise TypeError(
             f"Expected a file-like object, a path object or string, or a list of dicts; got {type(data).__name__}"

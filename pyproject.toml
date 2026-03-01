@@ -48,12 +48,22 @@ lint = [
     "bandit[sarif]~=1.9.4",
     "mypy~=1.19.1",
     "ruff~=0.15.4",
+    "types-requests>=2.27",
 ]
 
 [project.scripts]
 censusgeocode = "censusgeocode.__main__:main"
 
 [tool]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "censusgeocode.__version__"}
 
 [tool.ruff]
 line-length = 120

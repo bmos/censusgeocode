@@ -15,17 +15,26 @@ TWINE = $(PYTHON) -m twine
 help:
 	@echo "Usage: make [target]"
 	@echo "  install      Install the package"
-	@echo "  test         Run unit tests"
+	@echo "  lint         Install and run formatting, linting, and type checks"
+	@echo "  test         Install and run unit tests"
 	@echo "  build        Create source and wheel distributions"
 	@echo "  upload       Upload to PyPI using Twine"
-	@echo "  clean        Remove build artifacts"
+	@echo "  clean        Remove build artifacts and tooling caches"
 
 install:
 	$(PIP) install .
 
 test:
-	$(PIP) install -e ".[test]"
-	$(PYTHON) -m unittest discover tests/ "test_*.py"
+	$(PIP) install -e .[lint]
+	$(PYTHON) -m ruff format
+	$(PYTHON) -m ruff check --fix
+	$(PYTHON) -m bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
+	$(PYTHON) -m mypy src
+	$(PYTHON) -m mypy tests
+
+test:
+	$(PIP) install -e .[test]
+	$(PYTHON) -m pytest
 
 build: clean
 	$(BUILD)
@@ -34,5 +43,5 @@ upload: build
 	$(TWINE) upload dist/*
 
 clean:
-	rm -rf dist/ build/ *.egg-info .ruff_cache
+	rm -rf dist/ build/ *.egg-info .*_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +

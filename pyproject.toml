@@ -77,7 +77,11 @@ docstring-code-line-length = 80
 [tool.mypy]
 
 [[tool.mypy.overrides]]
-module = ["requests_toolbelt.*"]
+module = [
+    "censusgeocode.*",
+    "requests_toolbelt.*",
+    "vcr",
+]
 follow_untyped_imports = true
 
 [tool.pytest]

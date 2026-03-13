@@ -17,6 +17,18 @@ on:
 
 permissions: read-all
 
+env:
+  CACHE_GLOBS: |
+    **/pyproject.toml
+    **/uv.lock
+  ENDPOINT_WHITELIST: >-
+    pypi.org:443
+    github.com:443
+    releases.astral.sh
+    files.pythonhosted.org:443
+    *.github.com:443
+    *.githubusercontent.com:443
+
 jobs:
   pytest:
     strategy:
@@ -48,12 +60,7 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
-            release-assets.githubusercontent.com:443
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -61,17 +68,20 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/setup.cfg
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - run: uv pip install --resolution ${{ matrix.resolution }} .[test]
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group test
+          --resolution ${{ matrix.resolution }}
 
       - id: cache-pytest
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
         with:
           path: .pytest_cache
-          key: pytest-${{ matrix.python }}-${{ matrix.os }}-${{ matrix.resolution }}-${{ hashFiles('setup.cfg') }}
+          key: pytest-${{ matrix.python }}-${{ matrix.os }}-${{ matrix.resolution }}-${{ hashFiles('pyproject.toml') }}
 
       - run: pytest
         env:
@@ -98,10 +108,7 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            img.shields.io:443
-            github.com:443
+          allowed-endpoints: img.shields.io:443 ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -130,30 +137,27 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
-            release-assets.githubusercontent.com
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          python-version: '3.13'
+          python-version: 3.13
           activate-environment: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/setup.cfg
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - run: uv pip install .[lint]
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
 
       - id: cache-ruff
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
         with:
           path: .ruff_cache
-          key: ruff-${{ hashFiles('setup.cfg') }}
+          key: ruff-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
       - id: run-ruff
         run: ruff format --diff .
@@ -169,30 +173,27 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
-            release-assets.githubusercontent.com:443
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          python-version: '3.13'
+          python-version: 3.13
           activate-environment: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/setup.cfg
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - run: uv pip install .[lint]
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
 
       - id: cache-ruff
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
         with:
           path: .ruff_cache
-          key: ruff-${{ hashFiles('setup.cfg') }}
+          key: ruff-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
       - id: run-ruff-sarif
         run: |
@@ -219,24 +220,21 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
-            release-assets.githubusercontent.com:443
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          python-version: '3.13'
+          python-version: 3.13
           activate-environment: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/setup.cfg
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - run: uv pip install .[lint]
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
 
       - id: run-bandit-sarif
         run: |
@@ -260,28 +258,26 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
-          allowed-endpoints: >
-            api.github.c om:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
       - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-          python-version: '3.13'
+          python-version: 3.13
           activate-environment: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/setup.cfg
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - run: uv pip install .[lint]
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group type
 
       - id: cache-mypy
         uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: .mypy_cache
-          key: ${{ runner.os }}-mypy-${{ hashFiles('pyproject.toml') }}
+          key: mypy-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
       - run: mypy src

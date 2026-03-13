@@ -16,37 +16,50 @@ on:
       - main
   release:
     types:
-      types:
-        - created
+      - created
 
 permissions: read-all
+
+env:
+  CACHE_GLOBS: |
+    **/pyproject.toml
+    **/uv.lock
+  ENDPOINT_WHITELIST: >-
+    pypi.org:443
+    github.com:443
+    releases.astral.sh
+    files.pythonhosted.org:443
+    *.github.com:443
+    *.githubusercontent.com:443
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
-            python-version: "3.13"
-            cache: pip
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - name: Install uv
-        uses: install-pinned/uv@05d9162df91b0a72301801afd144d0b8b525e0b3
+      - run: >-
+          uv sync
+          --upgrade
 
-      - name: Install dependencies
-        run: |
-            uv pip install build
+      - run: >-
+          uv build
+          --sdist
 
-      - name: Build dist
-        run: |
-          make build
-
-      - name: Upload dist directory
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: censusgeocode-dist
           path: dist/
@@ -70,32 +83,34 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Download package
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: censusgeocode-dist
           path: dist
 
-      - name: Extract requirements for cache
-        shell: bash
+      - shell: bash
         run: |
           file=$(find ./dist -name 'censusgeocode-*.tar.gz' | head -1)
           # Extract to a temp directory first
           mkdir -p temp_extract
           tar -xzf "$file" -C temp_extract
           # Find and move requirements files to root
-          find temp_extract -name 'setup.cfg' -exec cp {} . \; 2>/dev/null || true
+          find temp_extract -name 'pyproject.toml' -exec cp {} . \; 2>/dev/null || true
           # Clean up
           rm -rf temp_extract
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
             python-version: ${{ matrix.python-version }}
             cache: pip
 
-      - name: Install package
-        shell: bash
+      - shell: bash
         run: |
           file=$(find ./dist -name 'censusgeocode-*.tar.gz' | head -1)
           pip install "$file"
@@ -111,16 +126,19 @@ jobs:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
 
     steps:
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Download package
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: censusgeocode-dist
           path: dist
 
-      - name: Publish package
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}

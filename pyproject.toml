@@ -6,7 +6,7 @@
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
 [build-system]
-requires = ["setuptools>=75", "wheel"]
+requires = ["build>=1.0", "setuptools>=75.0", "wheel>=0.40"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -33,7 +33,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.8,<4"
+requires-python = ">=3.8"
 dependencies = [
     "requests[security]>=2.27",
     "requests-toolbelt>=0.9.1",
@@ -45,16 +45,23 @@ Homepage = "https://github.com/fitnr/censusgeocode"
 Repository = "https://github.com/fitnr/censusgeocode.git"
 Changelog = "https://github.com/fitnr/censusgeocode/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+    {include-group = "type"},
+]
 test = [
     "pytest-cov>=5.0",
     "pytest>=8.3",
     "vcrpy>=6",
 ]
 lint = [
-    "bandit[sarif]~=1.9.4",
-    "mypy~=1.19.1",
+    "bandit[sarif]>=1.7.10",
     "ruff~=0.15.4",
+]
+type = [
+    "mypy>=1.14",
     "types-requests>=2.27",
 ]
 

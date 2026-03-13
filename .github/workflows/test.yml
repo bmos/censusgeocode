@@ -3,7 +3,7 @@
 
 # Licensed under the General Public License (version 3)
 # http://opensource.org/licenses/LGPL-3.0
-# Copyright (c) 2015-7, Neil Freeman <contact@fakeisthenewreal.org>
+# Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
 name: Test package
 
@@ -13,15 +13,24 @@ on:
       - master
       - main
   pull_request:
-    branches:
-      - master
-      - main
   workflow_dispatch:
 
 permissions: read-all
 
+env:
+  CACHE_GLOBS: |
+    **/pyproject.toml
+    **/uv.lock
+  ENDPOINT_WHITELIST: >-
+    pypi.org:443
+    github.com:443
+    releases.astral.sh
+    files.pythonhosted.org:443
+    *.github.com:443
+    *.githubusercontent.com:443
+
 jobs:
-  test:
+  pytest:
     strategy:
       fail-fast: false
       matrix:
@@ -37,20 +46,238 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
+        resolution:
+          - highest
+          - lowest-direct
 
     runs-on: ${{ matrix.os }}
 
-    steps:
-      - uses: actions/checkout@v5
+    permissions:
+      contents: write
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+    steps:
+      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
         with:
           python-version: ${{ matrix.python }}
-          cache: 'pip'
-          cache-dependency-path: setup.cfg
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
 
-      - name: Install package
-        run: pip install '.[test]'
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group test
+          --resolution ${{ matrix.resolution }}
 
-      - run: make test
+      - id: cache-pytest
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        with:
+          path: .pytest_cache
+          key: pytest-${{ matrix.python }}-${{ matrix.os }}-${{ matrix.resolution }}-${{ hashFiles('pyproject.toml') }}
+
+      - run: pytest
+        env:
+          COVERAGE_FILE: ".coverage.${{ matrix.os }}.${{ matrix.python }}.${{ matrix.resolution }}"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: coverage-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.resolution }}
+          path: .coverage.${{ matrix.os }}.${{ matrix.python }}.${{ matrix.resolution }}
+          include-hidden-files: true
+
+  coverage:
+    runs-on: ubuntu-latest
+
+    needs:
+      - pytest
+
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: img.shields.io:443 ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+
+      - id: coverage_comment
+        uses: py-cov-action/python-coverage-comment-action@7188638f871f721a365d644f505d1ff3df20d683
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_COVERAGE_FILES: true
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
+        with:
+          name: python-coverage-comment-action
+          path: python-coverage-comment-action.txt
+
+  ruff-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
+
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
+
+      - id: cache-ruff
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        with:
+          path: .ruff_cache
+          key: ruff-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - id: run-ruff
+        run: ruff format --diff .
+
+  ruff-check:
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+
+    steps:
+      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
+
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
+
+      - id: cache-ruff
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        with:
+          path: .ruff_cache
+          key: ruff-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - id: run-ruff-sarif
+        run: |
+          ruff check --output-format=sarif -o results.sarif .
+
+      - uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e
+        if: ( success() || failure() ) && contains('["success", "failure"]', steps.run-ruff-sarif.outcome)
+        with:
+          sarif_file: results.sarif
+
+      - id: run-ruff
+        if: failure() && contains('["failure"]', steps.run-ruff-sarif.outcome)
+        run: |
+          ruff check --output-format=github .
+
+  bandit:
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+
+    steps:
+      - uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
+
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group lint
+
+      - id: run-bandit-sarif
+        run: |
+          bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src' --format 'sarif' --output 'results.sarif'
+
+      - uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e
+        if: ( success() || failure() ) && contains('["success", "failure"]', steps.run-bandit-sarif.outcome)
+        with:
+          sarif_file: results.sarif
+
+      - id: run-bandit
+        if: failure() && contains('["failure"]', steps.run-bandit-sarif.outcome)
+        run: |
+          bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
+
+  mypy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
+
+      - run: >-
+          uv sync
+          --upgrade
+          --no-default-groups
+          --group type
+
+      - id: cache-mypy
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
+        with:
+          path: .mypy_cache
+          key: mypy-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - run: mypy src

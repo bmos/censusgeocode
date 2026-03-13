@@ -3,37 +3,146 @@
 
 # Licensed under the General Public License (version 3)
 # http://opensource.org/licenses/LGPL-3.0
-# Copyright (c) 2015-7, Neil Freeman <contact@fakeisthenewreal.org>
-name: Publish to PyPi
+# Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
+
+name: Build, test, & publish
 
 on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
   release:
-    types: [created]
+    types:
+      - created
 
 permissions: read-all
 
+env:
+  CACHE_GLOBS: |
+    **/pyproject.toml
+    **/uv.lock
+  ENDPOINT_WHITELIST: >-
+    pypi.org:443
+    github.com:443
+    releases.astral.sh
+    files.pythonhosted.org:443
+    *.github.com:443
+    *.githubusercontent.com:443
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+
+    steps:
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098
+        with:
+          python-version: 3.13
+          activate-environment: true
+          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
+
+      - run: >-
+          uv sync
+          --upgrade
+
+      - run: >-
+          uv build
+          --sdist
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: censusgeocode-dist
+          path: dist/
+
+  test:
+    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: censusgeocode-dist
+          path: dist
+
+      - shell: bash
+        run: |
+          file=$(find ./dist -name 'censusgeocode-*.tar.gz' | head -1)
+          # Extract to a temp directory first
+          mkdir -p temp_extract
+          tar -xzf "$file" -C temp_extract
+          # Find and move requirements files to root
+          find temp_extract -name 'pyproject.toml' -exec cp {} . \; 2>/dev/null || true
+          # Clean up
+          rm -rf temp_extract
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+            python-version: ${{ matrix.python-version }}
+            cache: pip
+
+      - shell: bash
+        run: |
+          file=$(find ./dist -name 'censusgeocode-*.tar.gz' | head -1)
+          pip install "$file"
+
+  publish:
+    if: github.repository_owner == 'fitnr' && github.event_name == 'release' && github.event.action == 'created'
+    needs: test
+
+    runs-on: ubuntu-latest
+    environment: release
 
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
 
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b
         with:
-          python-version: '3.13'
+          disable-sudo: true
+          egress-policy: audit
 
-      - name: Install build requirements
-        run: pip install build
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - run: make build
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: censusgeocode-dist
+          path: dist
 
-      - name: Publish package
-        uses: pypa/gh-action-pypi-publish@v1.13.0
+      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+          verify-metadata: true
+          skip-existing: true
+          packages-dir: dist
+          verbose: true

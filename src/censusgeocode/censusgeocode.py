@@ -11,11 +11,13 @@ https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.pdf
 # http://opensource.org/licenses/LGPL-3.0
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
+from __future__ import annotations
+
 import csv
 import io
 import warnings
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, TextIO, Union, Any, Iterable
+from typing import Any, Dict, Iterable, List, Literal, TextIO, Union
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -74,22 +76,34 @@ class CensusGeocode:
         self._benchmark = benchmark
         self._vintage = vintage
 
-    def _geturl(self, searchtype: SearchType, returntype: Optional[ReturnType] = "geographies") -> str:
+    def _geturl(self, searchtype: SearchType, returntype: ReturnType | None = "geographies") -> str:
         """Construct an URL for the geocoder."""
         return self._url.format(returntype=returntype, searchtype=searchtype)
 
     def _fetch(
         self,
         searchtype: SearchType,
-        fields: Dict[
-            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
-            Optional[Union[str, float]],
+        fields: dict[
+            Literal[
+                "vintage",
+                "benchmark",
+                "layers",
+                "format",
+                "x",
+                "y",
+                "address",
+                "street",
+                "city",
+                "state",
+                "zip",
+            ],
+            str | float | None,
         ],
         *,
-        returntype: Optional[ReturnType] = "geographies",
-        timeout: Optional[int] = DEFAULT_TIMEOUT,
+        returntype: ReturnType | None = "geographies",
+        timeout: int | None = DEFAULT_TIMEOUT,
         **kwargs,
-    ) -> Union["AddressResult", "GeographyResult"]:
+    ) -> AddressResult | GeographyResult:
         """Fetch a response from the Geocoding API."""
         fields["vintage"] = self.vintage
         fields["benchmark"] = self.benchmark
@@ -117,12 +131,29 @@ class CensusGeocode:
             raise ValueError(err_msg) from e
 
     def coordinates(
-        self, x: float, y: float, *, returntype: Optional[ReturnType] = "geographies", **kwargs
-    ) -> Union["AddressResult", "GeographyResult"]:
+        self,
+        x: float,
+        y: float,
+        *,
+        returntype: ReturnType | None = "geographies",
+        **kwargs,
+    ) -> AddressResult | GeographyResult:
         """Geocode a (lon, lat) coordinate."""
-        fields: Dict[
-            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
-            Optional[Union[str, float]],
+        fields: dict[
+            Literal[
+                "vintage",
+                "benchmark",
+                "layers",
+                "format",
+                "x",
+                "y",
+                "address",
+                "street",
+                "city",
+                "state",
+                "zip",
+            ],
+            str | float | None,
         ] = {"x": x, "y": y}
 
         return self._fetch("coordinates", fields=fields, returntype=returntype, **kwargs)
@@ -130,18 +161,30 @@ class CensusGeocode:
     def address(
         self,
         street: str,
-        city: Optional[str] = None,
-        state: Optional[str] = None,
+        city: str | None = None,
+        state: str | None = None,
         *,
-        zip: Optional[str] = None,
-        zipcode: Optional[str] = None,
-        timeout: Optional[int] = DEFAULT_TIMEOUT,
+        zip: str | None = None,
+        zipcode: str | None = None,
+        timeout: int | None = DEFAULT_TIMEOUT,
         **kwargs,
-    ) -> Union["AddressResult", "GeographyResult"]:
+    ) -> AddressResult | GeographyResult:
         """Geocode an address."""
-        fields: Dict[
-            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
-            Optional[Union[str, float]],
+        fields: dict[
+            Literal[
+                "vintage",
+                "benchmark",
+                "layers",
+                "format",
+                "x",
+                "y",
+                "address",
+                "street",
+                "city",
+                "state",
+                "zip",
+            ],
+            str | float | None,
         ] = {
             "street": street,
             "city": city,
@@ -151,13 +194,25 @@ class CensusGeocode:
 
         return self._fetch(searchtype="address", fields=fields, timeout=timeout, **kwargs)
 
-    def onelineaddress(self, address: str, **kwargs) -> Union["AddressResult", "GeographyResult"]:
+    def onelineaddress(self, address: str, **kwargs) -> AddressResult | GeographyResult:
         """Geocode an an address passed as one string.
         e.g. "4600 Silver Hill Rd, Suitland, MD 20746"
         """
-        fields: Dict[
-            Literal["vintage", "benchmark", "layers", "format", "x", "y", "address", "street", "city", "state", "zip"],
-            Optional[Union[str, float]],
+        fields: dict[
+            Literal[
+                "vintage",
+                "benchmark",
+                "layers",
+                "format",
+                "x",
+                "y",
+                "address",
+                "street",
+                "city",
+                "state",
+                "zip",
+            ],
+            str | float | None,
         ] = {
             "address": address,
         }
@@ -186,7 +241,7 @@ class CensusGeocode:
         See: https://geocoding.geo.census.gov/geocoder/vintages?form"""
         return self._vintage
 
-    def _parse_batch_result(self, data: str, returntype: ReturnType) -> List[ResultType]:
+    def _parse_batch_result(self, data: str, returntype: ReturnType) -> list[ResultType]:
         """Parse the batch address results returned from the Census Geocoding API"""
         try:
             fieldnames = self.batchfields[returntype]
@@ -214,14 +269,14 @@ class CensusGeocode:
 
     def _post_batch(
         self,
-        data: Optional[Iterable[Dict[str, Any]]] = None,
-        f: Optional[Union[io.IOBase, TextIO]] = None,
+        data: Iterable[dict[str, Any]] | None = None,
+        f: io.IOBase | TextIO | None = None,
         *,
         leave_open: bool = False,
         returntype: ReturnType = "geographies",
-        timeout: Optional[int] = DEFAULT_TIMEOUT,
+        timeout: int | None = DEFAULT_TIMEOUT,
         **kwargs,
-    ) -> List[ResultType]:
+    ) -> list[ResultType]:
         """Send batch address file to the Census Geocoding API"""
         url = self._geturl(searchtype="addressbatch", returntype=returntype)
 
@@ -262,8 +317,12 @@ class CensusGeocode:
                 f.close()
 
     def addressbatch(
-        self, data: Union[TextIO, str, Path, Iterable[Dict[str, Any]]], *, timeout: Optional[int] = None, **kwargs
-    ) -> List[ResultType]:
+        self,
+        data: TextIO | str | Path | Iterable[dict[str, Any]],
+        *,
+        timeout: int | None = None,
+        **kwargs,
+    ) -> list[ResultType]:
         """
         Send either a CSV file or data to the addressbatch API.
 
@@ -296,8 +355,8 @@ class CensusGeocode:
 class GeographyResult(Dict):
     """Wrapper for geography objects returned by the Census Geocoding API"""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
-        self.input: Union[str, int, float, List, Dict] = data["result"].get("input", {})
+    def __init__(self, data: dict[str, Any]) -> None:
+        self.input: str | int | float | list | dict = data["result"].get("input", {})
         super().__init__(data["result"]["geographies"])
 
         # create float coordinate tuples
@@ -317,6 +376,6 @@ class GeographyResult(Dict):
 class AddressResult(List):
     """Wrapper for address objects returned by the Census Geocoding API"""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
-        self.input: Union[str, int, float, List, Dict] = data["result"].get("input", {})
+    def __init__(self, data: dict[str, Any]) -> None:
+        self.input: str | int | float | list | dict = data["result"].get("input", {})
         super().__init__(data["result"]["addressMatches"])

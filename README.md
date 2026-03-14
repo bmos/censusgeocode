@@ -37,74 +37,74 @@ import censusgeocode as cg
 result = cg.coordinates(x=-76, y=41)
 
 print(result.input)
-# {
-#     'vintage': {
-#         'vintageName': 'Current_Current',
-#         'id': '4',
-#         'vintageDescription': 'Current Vintage - Current Benchmark',
-#         'isDefault': True
-#     },
-#     'benchmark': {
-#         'benchmarkName': 'Public_AR_Current',
-#         'id': '4',
-#         'isDefault': False,
-#         'benchmarkDescription': 'Public Address Ranges - Current Benchmark'
-#     },
-#     'location': {
-#         'y': 41.0,
-#         'x': -76.0
-#     }
-# }
+{
+    'vintage': {
+        'vintageName': 'Current_Current',
+        'id': '4',
+        'vintageDescription': 'Current Vintage - Current Benchmark',
+        'isDefault': True
+    },
+    'benchmark': {
+        'benchmarkName': 'Public_AR_Current',
+        'id': '4',
+        'isDefault': False,
+        'benchmarkDescription': 'Public Address Ranges - Current Benchmark'
+    },
+    'location': {
+        'y': 41.0,
+        'x': -76.0
+    }
+}
 
 print(result)
-# [{
-#     '2010 Census Blocks': [{
-#         'AREALAND': 1409023,
-#         'AREAWATER': 0,
-#         'BASENAME': '1045',
-#         'BLKGRP': '1',
-#         'BLOCK': '1045',
-#         'CENTLAT': '+40.9957436',
-#         'CENTLON': '-076.0089338',
-#         'COUNTY': '079',
-#         'FUNCSTAT': 'S',
-#         'GEOID': '420792166001045',
-#         'INTPTLAT': '+40.9957436',
-#         'INTPTLON': '-076.0089338',
-#         'LSADC': 'BK',
-#         'LWBLKTYP': 'L',
-#         'MTFCC': 'G5040',
-#         'NAME': 'Block 1045',
-#         'OBJECTID': 9940449,
-#         'OID': 210404020212114,
-#         'STATE': '42',
-#         'SUFFIX': '',
-#         'TRACT': '216600'
-#     }],
-#     'Census Tracts': [{
-#         # snip
-#         'NAME': 'Census Tract 2166',
-#         'OBJECTID': 61245,
-#         'OID': 20790277158250,
-#         'STATE': '42',
-#         'TRACT': '216600'
-#     }],
-#     'Counties': [{
-#         # snip
-#         'NAME': 'Luzerne County',
-#         'OBJECTID': 866,
-#         'OID': 27590277115518,
-#         'STATE': '42'
-#     }],
-#     'States': [{
-#         # snip
-#         'NAME': 'Pennsylvania',
-#         'REGION': '1',
-#         'STATE': '42',
-#         'STATENS': '01779798',
-#         'STUSAB': 'PA'
-#     }]
-# }]
+[{
+    '2010 Census Blocks': [{
+        'AREALAND': 1409023,
+        'AREAWATER': 0,
+        'BASENAME': '1045',
+        'BLKGRP': '1',
+        'BLOCK': '1045',
+        'CENTLAT': '+40.9957436',
+        'CENTLON': '-076.0089338',
+        'COUNTY': '079',
+        'FUNCSTAT': 'S',
+        'GEOID': '420792166001045',
+        'INTPTLAT': '+40.9957436',
+        'INTPTLON': '-076.0089338',
+        'LSADC': 'BK',
+        'LWBLKTYP': 'L',
+        'MTFCC': 'G5040',
+        'NAME': 'Block 1045',
+        'OBJECTID': 9940449,
+        'OID': 210404020212114,
+        'STATE': '42',
+        'SUFFIX': '',
+        'TRACT': '216600'
+    }],
+    'Census Tracts': [{
+        # snip
+        'NAME': 'Census Tract 2166',
+        'OBJECTID': 61245,
+        'OID': 20790277158250,
+        'STATE': '42',
+        'TRACT': '216600'
+    }],
+    'Counties': [{
+        # snip
+        'NAME': 'Luzerne County',
+        'OBJECTID': 866,
+        'OID': 27590277115518,
+        'STATE': '42'
+    }],
+    'States': [{
+        # snip
+        'NAME': 'Pennsylvania',
+        'REGION': '1',
+        'STATE': '42',
+        'STATENS': '01779798',
+        'STUSAB': 'PA'
+    }]
+}]
 ```
 
 ## Advanced

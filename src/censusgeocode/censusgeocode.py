@@ -175,7 +175,7 @@ class CensusGeocode:
             if row["coordinate"]:
                 try:
                     row["lon"], row["lat"] = tuple(float(a) for a in row["coordinate"].split(","))
-                except:
+                except ValueError:
                     pass
 
             del row["coordinate"]

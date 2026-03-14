@@ -279,10 +279,11 @@ class CensusGeocode:
             return self._post_batch(f=data, leave_open=True, timeout=timeout, **kwargs)
 
         if isinstance(data, (str, Path)):
-            if isinstance(data, str) and not Path(data).exists():
-                raise FileNotFoundError("File not found at path {str}")
-            f = open(data, "rb")
-            return self._post_batch(f=f, leave_open=False, timeout=timeout, **kwargs)
+            if not Path(data).exists():
+                err_msg = f"File not found at path {data}"
+                raise FileNotFoundError(err_msg)
+            data_file = open(data, "rb")
+            return self._post_batch(f=data_file, leave_open=False, timeout=timeout, **kwargs)
 
         if isinstance(data, Iterable):
             return self._post_batch(data=data, leave_open=False, timeout=timeout, **kwargs)

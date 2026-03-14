@@ -1,28 +1,22 @@
-# Copyright (C) 2015-7 Neil Freeman
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Command-line interface for censusgeocode"""
+
+# This file is part of censusgeocode.
+# https://github.com/fitnr/censusgeocode
+
+# Licensed under the General Public License (version 3)
+# http://opensource.org/licenses/LGPL-3.0
+# Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
+
 import argparse
 import csv
 import io
 import sys
 
 from . import __version__
-from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode
+from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode, DEFAULT_TIMEOUT
 
 
-def main():
+def main() -> None:
     """Command-line interface for censusgeocode"""
     parser = argparse.ArgumentParser("censusgeocode", description="Command-line interface for the Census Geocoding API")
 
@@ -59,21 +53,21 @@ def main():
         "--timeout",
         metavar="SECONDS",
         type=int,
-        default=12,
-        help="Request timeout [default: 12]",
+        default=DEFAULT_TIMEOUT,
+        help=f"Request timeout [default: {DEFAULT_TIMEOUT}]",
     )
 
     args = parser.parse_args()
     cg = CensusGeocode(benchmark=args.benchmark, vintage=args.vintage)
 
     if args.address:
-        result = cg.onelineaddress(args.address, returntype=args.rettype, timeout=args.timeout)
+        search_result = cg.onelineaddress(args.address, returntype=args.rettype, timeout=args.timeout)
 
         try:
-            print("{},{}".format(result[0]["coordinates"]["x"], result[0]["coordinates"]["y"]))
+            print("{},{}".format(search_result[0]["coordinates"]["x"], search_result[0]["coordinates"]["y"]))
 
         except IndexError:
-            print("Address not found: {}".format(args.address), file=sys.stderr)
+            print(f"Address not found: {args.address}", file=sys.stderr)
             sys.exit(1)
 
     elif args.csv:
@@ -86,13 +80,13 @@ def main():
         else:
             infile = args.csv
 
-        result = cg.addressbatch(infile, returntype=args.rettype, timeout=args.timeout)
+        csv_result = cg.addressbatch(infile, returntype=args.rettype, timeout=args.timeout)
 
         fieldnames = cg.batchfields[args.rettype] + ["lat", "lon"]
         fieldnames.pop(fieldnames.index("coordinate"))
         writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(result)
+        writer.writerows(csv_result)
 
     else:
         print("Address or csv file required", file=sys.stderr)

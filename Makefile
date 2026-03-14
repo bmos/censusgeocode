@@ -22,10 +22,10 @@ help:
 	@echo "  clean        Remove build artifacts and tooling caches"
 
 install:
-	$(PIP) install .
+	$(PIP) install -e . --group dev
 
-test:
-	$(PIP) install -e .[lint]
+lint:
+	$(PIP) install -e . --group lint --group type
 	$(PYTHON) -m ruff format
 	$(PYTHON) -m ruff check --fix
 	$(PYTHON) -m bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
@@ -33,7 +33,7 @@ test:
 	$(PYTHON) -m mypy tests
 
 test:
-	$(PIP) install -e .[test]
+	$(PIP) install -e . --group test
 	$(PYTHON) -m pytest
 
 build: clean

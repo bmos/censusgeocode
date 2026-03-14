@@ -56,8 +56,8 @@ def test_onelineaddress(cg):
     assert results[0]
 
     assert results[0]["geographies"]["Counties"][0]["BASENAME"] == "District of Columbia"
-    assert "Metropolitan Divisions" in results[0]["geographies"].keys()
-    assert "Alaska Native Village Statistical Areas" in results[0]["geographies"].keys()
+    assert "Metropolitan Divisions" in results[0]["geographies"]
+    assert "Alaska Native Village Statistical Areas" in results[0]["geographies"]
 
 
 @vcr.use_cassette("tests/fixtures/address-locations.yaml")
@@ -123,6 +123,7 @@ def test_addressbatch_file_not_found(cg, bad_file):
 
     with pytest.raises(FileNotFoundError, match=re.escape(f"File not found at path {bad_file}")):
         cg.addressbatch(bad_file, returntype="geographies")
+
 
 def test_warning10k(cg):
     """Sending more than 10,000 records to batch raises a warning."""

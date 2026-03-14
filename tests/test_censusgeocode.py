@@ -1,5 +1,7 @@
 """Tests for censusgeocode"""
 
+import warnings
+
 # This file is part of censusgeocode.
 # https://github.com/fitnr/censusgeocode
 
@@ -7,103 +9,112 @@
 # http://opensource.org/licenses/LGPL-3.0
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
-import unittest
+import pytest
 import vcr
-import warnings
-
+from pathlib import Path
 from censusgeocode import CensusGeocode
-from censusgeocode.censusgeocode import AddressResult, GeographyResult
+from censusgeocode.censusgeocode import GeographyResult
 
 
-class CensusGeoCodeTestCase(unittest.TestCase):
+@vcr.use_cassette("tests/fixtures/coordinates.yaml")
+def test_returns_geo(cg):
+    results = cg.coordinates(-74, 43, returntype="geographies")
+    assert isinstance(results, GeographyResult)
+    assert results.input
 
-    cg = None
 
-    def setUp(self):
-        self.cg = CensusGeocode()
+@vcr.use_cassette("tests/fixtures/coordinates.yaml")
+def test_coords(cg):
+    results = cg.coordinates(-74, 43)
+    assert results["Counties"][0]["BASENAME"] == "Saratoga"
+    assert results["Counties"][0]["GEOID"] == "36091"
+    assert results["Census Tracts"][0]["BASENAME"] == "615"
 
-    @vcr.use_cassette('tests/fixtures/coordinates.yaml')
-    def test_returns_geo(self):
-        results = self.cg.coordinates(-74, 43, returntype='geographies')
-        assert isinstance(results, GeographyResult)
-        assert results.input
 
-    @vcr.use_cassette('tests/fixtures/coordinates.yaml')
-    def test_coords(self):
-        results = self.cg.coordinates(-74, 43)
-        assert results['Counties'][0]['BASENAME'] == 'Saratoga'
-        assert results['Counties'][0]['GEOID'] == '36091'
-        assert results['Census Tracts'][0]['BASENAME'] == "615"
+def test_url(cg):
+    r = cg._geturl("coordinates", "geographies")
+    assert r == "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
 
-    def test_url(self):
-        r = self.cg._geturl('coordinates', 'geographies')
-        assert r == 'https://geocoding.geo.census.gov/geocoder/geographies/coordinates'
 
-    @vcr.use_cassette('tests/fixtures/address-geographies.yaml')
-    def test_address_zipcode(self):
-        results = self.cg.address('1600 Pennsylvania Avenue NW', city='Washington', state='DC', zipcode='20500')
-        assert results[0]
-        assert results[0]['geographies']['Counties'][0]['BASENAME'] == 'District of Columbia'
+@vcr.use_cassette("tests/fixtures/address-geographies.yaml")
+def test_address_zipcode(cg):
+    results = cg.address("1600 Pennsylvania Avenue NW", city="Washington", state="DC", zipcode="20500")
+    assert results[0]
+    assert results[0]["geographies"]["Counties"][0]["BASENAME"] == "District of Columbia"
 
-    @vcr.use_cassette('tests/fixtures/address-geographies.yaml')
-    def test_address_zip(self):
-        results = self.cg.address('1600 Pennsylvania Avenue NW', city='Washington', state='DC', zip='20500')
-        assert results[0]
-        assert results[0]['geographies']['Counties'][0]['BASENAME'] == 'District of Columbia'
 
-    @vcr.use_cassette('tests/fixtures/onelineaddress.yaml')
-    def test_onelineaddress(self):
-        results = self.cg.onelineaddress('1600 Pennsylvania Avenue NW, Washington, DC, 20500', layers='all')
-        assert results[0]
-        try:
-            assert results[0]['geographies']['Counties'][0]['BASENAME'] == 'District of Columbia'
-        except AssertionError:
-            print(results[0]['geographies']['Counties'][0])
-            raise
+@vcr.use_cassette("tests/fixtures/address-geographies.yaml")
+def test_address_zip(cg):
+    results = cg.address("1600 Pennsylvania Avenue NW", city="Washington", state="DC", zip="20500")
+    assert results[0]
+    assert results[0]["geographies"]["Counties"][0]["BASENAME"] == "District of Columbia"
 
-        assert 'Metropolitan Divisions' in results[0]['geographies'].keys()
-        assert 'Alaska Native Village Statistical Areas' in results[0]['geographies'].keys()
 
-    @vcr.use_cassette('tests/fixtures/address-locations.yaml')
-    def test_address_return_type(self):
-        results = self.cg.address('1600 Pennsylvania Avenue NW', city='Washington', state='DC', zipcode='20500', returntype='locations')
+@vcr.use_cassette("tests/fixtures/onelineaddress.yaml")
+def test_onelineaddress(cg):
+    results = cg.onelineaddress("1600 Pennsylvania Avenue NW, Washington, DC, 20500", layers="all")
+    assert results[0]
 
-        assert results[0]['matchedAddress'].upper() == '1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20502'
-        assert results[0]['addressComponents']['streetName'] == 'PENNSYLVANIA'
+    assert results[0]["geographies"]["Counties"][0]["BASENAME"] == "District of Columbia"
+    assert "Metropolitan Divisions" in results[0]["geographies"].keys()
+    assert "Alaska Native Village Statistical Areas" in results[0]["geographies"].keys()
 
-    @vcr.use_cassette('tests/fixtures/test_benchmark_vintage.yaml')
-    def test_benchmark_vintage(self):
-        """Initializing CensuGeocode with benchmark and vintage keywords works"""
-        bmark, vint = 'Public_AR_Census2020', 'Census2020_Current'
 
-        cg = CensusGeocode(benchmark=bmark, vintage=vint)
-        result = cg.address('1600 Pennsylvania Avenue NW', city='Washington', state='DC', zipcode='20500', returntype='geographies')
+@vcr.use_cassette("tests/fixtures/address-locations.yaml")
+def test_address_return_type(cg):
+    results = cg.address(
+        "1600 Pennsylvania Avenue NW",
+        city="Washington",
+        state="DC",
+        zipcode="20500",
+        returntype="locations",
+    )
+    assert results[0]["matchedAddress"].upper() == "1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20502"
+    assert results[0]["addressComponents"]["streetName"] == "PENNSYLVANIA"
 
-        self.assertEqual(result.input['benchmark']['benchmarkName'], bmark)
-        self.assertEqual(result.input['vintage']['vintageName'], vint)
-        self.assertEqual(result[0]['geographies']['Census Tracts'][0]['GEOID'], '11001006202')
 
-    @vcr.use_cassette('tests/fixtures/address-batch.yaml')
-    def test_addressbatch(self):
-        """batch() function works"""
-        result = self.cg.addressbatch('tests/fixtures/batch.csv', returntype='locations')
-        assert isinstance(result, list)
-        resultdict = {int(r['id']): r for r in result}
-        assert resultdict[3]['parsed'] == '3 GRAMERCY PARK W, NEW YORK, NY, 10003'
-        assert resultdict[2]['match'] is False
+@vcr.use_cassette("tests/fixtures/test_benchmark_vintage.yaml")
+def test_benchmark_vintage():
+    """Tests custom initialization logic independently of the default fixture."""
+    bmark, vint = "Public_AR_Census2020", "Census2020_Current"
+    cg_custom = CensusGeocode(benchmark=bmark, vintage=vint)
+    result = cg_custom.address(
+        "1600 Pennsylvania Avenue NW",
+        city="Washington",
+        state="DC",
+        zipcode="20500",
+        returntype="geographies",
+    )
+    assert result.input["benchmark"]["benchmarkName"] == bmark
+    assert result.input["vintage"]["vintageName"] == vint
+    assert result[0]["geographies"]["Census Tracts"][0]["GEOID"] == "11001006202"
 
-        result = self.cg.addressbatch('tests/fixtures/batch.csv', returntype='geographies')
-        assert isinstance(result, list)
-        resultdict = {int(r['id']): r for r in result}
-        assert resultdict[3]['tigerlineid'] == '59653655'
-        assert resultdict[3]['statefp'] == '36'
-        assert resultdict[2]['match'] is False
 
-    def test_warning10k(self):
-        """Sending more than 10,000 records to batch raises a warning"""
-        warnings.simplefilter("error")
-        data = ({} for _ in range(10001))
-        result = []
-        with self.assertRaises(UserWarning, msg="Get a warning when sending more than 10k rows to batch()"):
-            result = self.cg.addressbatch(data)
-        self.assertEqual(result, [], "Result is empty")
+@vcr.use_cassette("tests/fixtures/address-batch.yaml")
+@pytest.mark.parametrize(
+    "batch_input",
+    ["tests/fixtures/batch.csv", Path("tests/fixtures/batch.csv")],
+    ids=["string", "pathlib.Path"],
+)
+def test_addressbatch(cg, batch_input):
+    """batch() function works with varied input types."""
+    result = cg.addressbatch(batch_input, returntype="locations")
+    assert isinstance(result, list)
+    resultdict = {int(r["id"]): r for r in result}
+    assert resultdict[3]["parsed"] == "3 GRAMERCY PARK W, NEW YORK, NY, 10003"
+    assert resultdict[2]["match"] is False
+
+    result_geo = cg.addressbatch(batch_input, returntype="geographies")
+    assert isinstance(result_geo, list)
+    resultdict_geo = {int(r["id"]): r for r in result_geo}
+    assert resultdict_geo[3]["tigerlineid"] == "59653655"
+    assert resultdict_geo[3]["statefp"] == "36"
+
+
+def test_warning10k(cg):
+    """Sending more than 10,000 records to batch raises a warning."""
+    warnings.simplefilter("error")
+    result = []
+    with pytest.raises(UserWarning, match="Sending more than 10,000 records"):
+        result = cg.addressbatch({} for _ in range(10001))
+    assert result == []

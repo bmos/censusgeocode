@@ -9,7 +9,7 @@
 
 install: ; pip install .
 
-test: ; python -m unittest tests/test_*.py
+test: ; python -m pytest tests
 
 deploy: build
 	twine upload dist/*

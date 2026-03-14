@@ -55,8 +55,9 @@ tests = [
     {include-group = "test"},
 ]
 test = [
-    "pytest-cov>=5.0",
     "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "pytest-xdist>=3.6",
     "vcrpy>=6",
 ]
 lint = [
@@ -104,7 +105,7 @@ follow_untyped_imports = true
 [tool.pytest]
 
 [tool.pytest.ini_options]
-addopts = "--cov"
+addopts = "-n auto --cov"
 
 [tool.coverage]
 

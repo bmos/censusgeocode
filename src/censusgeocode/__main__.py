@@ -15,9 +15,9 @@ import sys
 from . import __version__
 from .censusgeocode import (
     DEFAULT_BENCHMARK,
+    DEFAULT_TIMEOUT,
     DEFAULT_VINTAGE,
     CensusGeocode,
-    DEFAULT_TIMEOUT,
 )
 
 

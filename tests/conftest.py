@@ -8,6 +8,7 @@
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
 import pytest
+
 from censusgeocode import CensusGeocode
 
 

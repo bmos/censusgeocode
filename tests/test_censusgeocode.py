@@ -1,6 +1,4 @@
 """Tests for censusgeocode"""
-import re
-import warnings
 
 # This file is part of censusgeocode.
 # https://github.com/fitnr/censusgeocode
@@ -9,9 +7,15 @@ import warnings
 # http://opensource.org/licenses/LGPL-3.0
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
+import random
+import re
+import string
+import warnings
+from pathlib import Path
+
 import pytest
 import vcr
-from pathlib import Path
+
 from censusgeocode import CensusGeocode
 from censusgeocode.censusgeocode import GeographyResult
 
@@ -88,6 +92,20 @@ def test_benchmark_vintage():
     assert result.input["benchmark"]["benchmarkName"] == bmark
     assert result.input["vintage"]["vintageName"] == vint
     assert result[0]["geographies"]["Census Tracts"][0]["GEOID"] == "11001006202"
+
+
+def test_set_vintage(cg: CensusGeocode):
+    """Test changing vintage."""
+    vint = random.choices(string.ascii_letters, k=8)
+    cg.set_vintage(vint)
+    assert cg.vintage == vint
+
+
+def test_set_benchmark(cg: CensusGeocode):
+    """Test changing vintage."""
+    bmark = random.choices(string.ascii_letters, k=8)
+    cg.set_benchmark(bmark)
+    assert cg.benchmark == bmark
 
 
 @vcr.use_cassette("tests/fixtures/address-batch.yaml")

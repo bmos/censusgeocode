@@ -51,6 +51,9 @@ dev = [
     {include-group = "lint"},
     {include-group = "type"},
 ]
+tests = [
+    {include-group = "test"},
+]
 test = [
     "pytest-cov>=5.0",
     "pytest>=8.3",

@@ -15,9 +15,3 @@ from censusgeocode import CensusGeocode
 def cg():
     """Provides an initialized CensusGeocode instance."""
     return CensusGeocode()
-
-
-@pytest.fixture
-def batch_path(request):
-    """Provides either a string or a Path object for batch testing."""
-    return request.param

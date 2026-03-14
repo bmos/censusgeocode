@@ -1,5 +1,5 @@
 """Tests for censusgeocode"""
-
+import re
 import warnings
 
 # This file is part of censusgeocode.
@@ -110,6 +110,19 @@ def test_addressbatch(cg, batch_input):
     assert resultdict_geo[3]["tigerlineid"] == "59653655"
     assert resultdict_geo[3]["statefp"] == "36"
 
+
+@pytest.mark.parametrize(
+    "bad_file",
+    ["tests/fixtures/nonexistent.csv", Path("tests/fixtures/nonexistent.csv")],
+    ids=["string", "pathlib.Path"],
+)
+def test_addressbatch_file_not_found(cg, bad_file):
+    """batch() function raises error when file not found."""
+    with pytest.raises(FileNotFoundError, match=re.escape(f"File not found at path {bad_file}")):
+        cg.addressbatch(bad_file, returntype="locations")
+
+    with pytest.raises(FileNotFoundError, match=re.escape(f"File not found at path {bad_file}")):
+        cg.addressbatch(bad_file, returntype="geographies")
 
 def test_warning10k(cg):
     """Sending more than 10,000 records to batch raises a warning."""

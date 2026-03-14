@@ -13,12 +13,20 @@ import io
 import sys
 
 from . import __version__
-from .censusgeocode import DEFAULT_BENCHMARK, DEFAULT_VINTAGE, CensusGeocode, DEFAULT_TIMEOUT
+from .censusgeocode import (
+    DEFAULT_BENCHMARK,
+    DEFAULT_VINTAGE,
+    CensusGeocode,
+    DEFAULT_TIMEOUT,
+)
 
 
 def main() -> None:
     """Command-line interface for censusgeocode"""
-    parser = argparse.ArgumentParser("censusgeocode", description="Command-line interface for the Census Geocoding API")
+    parser = argparse.ArgumentParser(
+        "censusgeocode",
+        description="Command-line interface for the Census Geocoding API",
+    )
 
     parser.add_argument("-v", "--version", action="version", version="%(prog)s v" + __version__)
     parser.add_argument("address", type=str, nargs="?", default=None)
@@ -64,7 +72,12 @@ def main() -> None:
         search_result = cg.onelineaddress(args.address, returntype=args.rettype, timeout=args.timeout)
 
         try:
-            print("{},{}".format(search_result[0]["coordinates"]["x"], search_result[0]["coordinates"]["y"]))
+            print(
+                "{},{}".format(
+                    search_result[0]["coordinates"]["x"],
+                    search_result[0]["coordinates"]["y"],
+                )
+            )
 
         except IndexError:
             print(f"Address not found: {args.address}", file=sys.stderr)

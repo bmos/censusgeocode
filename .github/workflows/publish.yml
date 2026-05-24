@@ -53,7 +53,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
 
       - run: >-
           uv build

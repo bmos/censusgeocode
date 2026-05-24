@@ -72,7 +72,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
           --no-default-groups
           --group test
           --resolution ${{ matrix.resolution }}
@@ -149,7 +148,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
           --no-default-groups
           --group lint
 
@@ -185,7 +183,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
           --no-default-groups
           --group lint
 
@@ -232,7 +229,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
           --no-default-groups
           --group lint
 
@@ -270,7 +266,6 @@ jobs:
 
       - run: >-
           uv sync
-          --upgrade
           --no-default-groups
           --group type
 

@@ -134,7 +134,7 @@ class CensusGeocode:
         x: float,
         y: float,
         *,
-        returntype: ReturnType | None = "geographies",
+        returntype: ReturnType = "geographies",
         **kwargs,
     ) -> AddressResult | GeographyResult:
         """Geocode a (lon, lat) coordinate."""
@@ -165,7 +165,7 @@ class CensusGeocode:
         *,
         zip: str | None = None,
         zipcode: str | None = None,
-        timeout: int | None = DEFAULT_TIMEOUT,
+        timeout: int = DEFAULT_TIMEOUT,
         **kwargs,
     ) -> AddressResult | GeographyResult:
         """Geocode an address."""

@@ -273,7 +273,7 @@ class CensusGeocode:
         *,
         leave_open: bool = False,
         returntype: ReturnType = "geographies",
-        timeout: int | None = DEFAULT_TIMEOUT,
+        timeout: int | None = None,
         **kwargs,
     ) -> list[ResultType]:
         """Send batch address file to the Census Geocoding API"""
@@ -282,6 +282,9 @@ class CensusGeocode:
         if data is None and f is None:
             err_msg = "Need either data or a file for CensusGeocode.addressbatch"
             raise ValueError(err_msg)
+
+        if not timeout:
+            timeout = DEFAULT_TIMEOUT
 
         if data:
             f = io.StringIO()

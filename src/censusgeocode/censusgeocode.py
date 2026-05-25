@@ -66,19 +66,34 @@ class CensusGeocode:
 
     def __init__(self, benchmark: str = DEFAULT_BENCHMARK, vintage: str = DEFAULT_VINTAGE):
         """
-        Arguments:
-            benchmark (str): A name that references the version of the locator to use.
+        Args:
+            benchmark (str):
+                Name that references the version of the locator to use.
                 See https://geocoding.geo.census.gov/geocoder/benchmarks
-            vintage (str): The geography part of the desired vintage.
-                See: https://geocoding.geo.census.gov/geocoder/vintages?form
+            vintage (str):
+                Geography part of the desired vintage.
+                See https://geocoding.geo.census.gov/geocoder/vintages?form
 
-        >>> CensusGeocode(benchmark="Public_AR_Current", vintage="Current_Current")
+        Example:
+            CensusGeocode(benchmark="Public_AR_Current", vintage="Current_Current")
+
         """
         self._benchmark = benchmark
         self._vintage = vintage
 
-    def _geturl(self, searchtype: SearchType, returntype: ReturnType | None = "geographies") -> str:
-        """Construct an URL for the geocoder."""
+    def _geturl(self, searchtype: SearchType, returntype: ReturnType = "geographies") -> str:
+        """
+        Construct an URL for the geocoder.
+
+        Args:
+            searchtype (SearchType): The type of search to perform.
+            returntype (ReturnType): The type of response to return.
+
+        Returns:
+            str:
+                The constructed URL for the geocoder API request.
+
+        """
         return self._url.format(returntype=returntype, searchtype=searchtype)
 
     def _fetch(
@@ -106,7 +121,22 @@ class CensusGeocode:
         layers: str | None = None,
         **kwargs,
     ) -> AddressResult | GeographyResult:
-        """Fetch a response from the Geocoding API."""
+        """
+        Fetch a response from the Geocoding API.
+
+        Args:
+            searchtype (SearchType): Type of search to perform.
+            fields (dict): Parameters of the request.
+            returntype (ReturnType): Type of response to return.
+            timeout (int): Number of seconds to wait for a response.
+            layers (str | None): Layers to include in the response.
+            **kwargs: Additional keyword arguments to pass to the request.
+
+        Returns:
+            AddressResult | GeographyResult:
+                The response from the Geocoding API.
+
+        """
         fields["vintage"] = self.vintage
         fields["benchmark"] = self.benchmark
         fields["format"] = "json"
@@ -138,7 +168,19 @@ class CensusGeocode:
         returntype: ReturnType = "geographies",
         **kwargs,
     ) -> AddressResult | GeographyResult:
-        """Geocode a (lon, lat) coordinate."""
+        """
+        Geocode a (lon, lat) coordinate.
+
+        Args:
+            x (float): The longitude coordinate.
+            y (float): The latitude coordinate.
+            returntype (ReturnType): The type of response to return.
+
+        Returns:
+            AddressResult | GeographyResult:
+                The response from the Geocoding API.
+
+        """
         fields: dict[
             Literal[
                 "vintage",
@@ -169,7 +211,23 @@ class CensusGeocode:
         timeout: int = DEFAULT_TIMEOUT,
         **kwargs,
     ) -> AddressResult | GeographyResult:
-        """Geocode an address."""
+        """
+        Geocode an address.
+
+        Args:
+            street: The street address.
+            city: The city.
+            state: The state.
+            zip: The ZIP code.
+            zipcode: The ZIP code (alternative).
+            timeout: The timeout for the request.
+            **kwargs: Additional keyword arguments to pass to the request.
+
+        Returns:
+            AddressResult | GeographyResult:
+                The response from the Geocoding API.
+
+        """
         fields: dict[
             Literal[
                 "vintage",
@@ -195,8 +253,19 @@ class CensusGeocode:
         return self._fetch(searchtype="address", fields=fields, timeout=timeout, **kwargs)
 
     def onelineaddress(self, address: str, **kwargs) -> AddressResult | GeographyResult:
-        """Geocode an an address passed as one string.
-        e.g. "4600 Silver Hill Rd, Suitland, MD 20746"
+        """
+        Geocode an an address passed as one string.
+
+        Args:
+            address (str):
+                The address to geocode.
+                e.g. "4600 Silver Hill Rd, Suitland, MD 20746"
+            **kwargs: Additional keyword arguments to pass to the request.
+
+        Returns:
+            AddressResult | GeographyResult:
+                The response from the Geocoding API.
+
         """
         fields: dict[
             Literal[
@@ -220,29 +289,64 @@ class CensusGeocode:
         return self._fetch(searchtype="onelineaddress", fields=fields, **kwargs)
 
     def set_benchmark(self, benchmark: str) -> None:
-        """Set the Census Geocoding API benchmark the class will use.
-        See: https://geocoding.geo.census.gov/geocoder/vintages?form"""
+        """
+        Set the Census Geocoding API benchmark the class will use.
+
+        See https://geocoding.geo.census.gov/geocoder/vintages?form
+
+        Args:
+            benchmark (str): The benchmark to use in future queries.
+
+        """
         self._benchmark = benchmark
 
     @property
     def benchmark(self) -> str:
-        """Give the Census Geocoding API benchmark the class is using.
-        See: https://geocoding.geo.census.gov/geocoder/benchmarks"""
+        """
+        Give the Census Geocoding API benchmark the class is using.
+
+        See https://geocoding.geo.census.gov/geocoder/benchmarks
+
+        """
         return self._benchmark
 
     def set_vintage(self, vintage: str) -> None:
-        """Set the Census Geocoding API vintage the class will use.
-        See: https://geocoding.geo.census.gov/geocoder/vintages?form"""
+        """
+        Set the Census Geocoding API vintage the class will use.
+
+        See https://geocoding.geo.census.gov/geocoder/vintages?form
+
+        Args:
+            vintage (str): The vintage to use in future queries.
+
+        """
         self._vintage = vintage
 
     @property
     def vintage(self) -> str:
-        """Give the Census Geocoding API vintage the class is using.
-        See: https://geocoding.geo.census.gov/geocoder/vintages?form"""
+        """
+        Give the Census Geocoding API vintage the class is using.
+
+        See https://geocoding.geo.census.gov/geocoder/vintages?form
+
+        """
         return self._vintage
 
     def _parse_batch_result(self, data: str, returntype: ReturnType) -> list[ResultType]:
-        """Parse the batch address results returned from the Census Geocoding API"""
+        """
+        Parse the batch address results returned from the Census Geocoding API.
+
+        Args:
+            data (str): The raw response data from the API.
+            returntype (ReturnType): The type of result to parse.
+
+        Returns:
+            list[ResultType]: The parsed results as a list of dictionaries.
+
+        Raises:
+            ValueError: If the returntype is not recognized.
+
+        """
         try:
             fieldnames = self.batchfields[returntype]
 
@@ -278,7 +382,24 @@ class CensusGeocode:
         timeout: int | None = None,
         **kwargs,
     ) -> list[ResultType]:
-        """Send batch address file to the Census Geocoding API"""
+        """
+        Send batch address file to the Census Geocoding API.
+
+        Args:
+            data (Iterable[dict[str, Any]] | None): The data to send, as an iterable of dictionaries.
+            f (io.IOBase | TextIO | None): The file to send, if data is not provided.
+            leave_open (bool): Whether to leave the file open after sending.
+            returntype (ReturnType): The type of result to return.
+            timeout (int | None): The timeout for the request, in seconds.
+            **kwargs: Additional keyword arguments to pass to the request.
+
+        Returns:
+            list[ResultType]: The parsed results as a list of dictionaries.
+
+        Raises:
+            ValueError: If neither data nor a file is provided.
+
+        """
         url = self._geturl(searchtype="addressbatch", returntype=returntype)
 
         if data is None and f is None:
@@ -330,13 +451,29 @@ class CensusGeocode:
         """
         Send either a CSV file or data to the addressbatch API.
 
-        According to the Census, "there is currently an upper limit of 10,000 records per batch file."
+        According to the Census,
+        "there is currently an upper limit of 10,000 records per batch file."
 
-        * If a file, can either be a file-like with a `read()` method, or a `Path` object or
-          `str` that's a path to the file. Either way, it must have no header and have fields
-          id, street, city, state, and zip.
+        Args:
+            data (TextIO | str | Path | Iterable[dict[str, Any]]):
+                The data to send, either as a file-like object,
+                a `Path` object or `str` path, or an iterable of dictionaries.
 
-        * If data, should be an iterable of dicts with the above fields (although ID is optional).
+                - If a file, can either be a file-like with a `read()` method,
+                  or a `Path` object or `str` that's a path to the file.
+                  Either way, it must have no header and have fields
+                  ``id``, ``street``, ``city``, ``state``, and ``zip``.
+                - If data, should be an iterable of dicts
+                  with the above fields (although ID is optional).
+
+            timeout (int | None): The timeout for the request, in seconds.
+
+        Returns:
+            list[ResultType]: The parsed results as a list of dictionaries.
+
+        Raises:
+            TypeError: If the data is not a file-like object, `Path`, `str`, or iterable of dictionaries.
+
         """
         if isinstance(data, (io.IOBase, TextIO)):
             return self._post_batch(f=data, leave_open=True, timeout=timeout, **kwargs)

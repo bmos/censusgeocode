@@ -1,5 +1,6 @@
 """
 Census Geocoder wrapper.
+
 For details on the API, see:
 https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.pdf
 """
@@ -244,6 +245,7 @@ class CensusGeocode:
         """Parse the batch address results returned from the Census Geocoding API"""
         try:
             fieldnames = self.batchfields[returntype]
+
         except KeyError as e:
             err_msg = f"unknown returntype: {returntype}"
             raise ValueError(err_msg) from e
@@ -294,7 +296,7 @@ class CensusGeocode:
                 writer.writerow(row)
                 if i == 10001:
                     warnings.warn(
-                        "Sending more than 10,000 records, the upper limit for the Census Geocoder."
+                        "Sending more than 10,000 records, the upper limit for the Census Geocoder. "
                         "Request will likely fail."
                     )
 

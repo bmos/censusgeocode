@@ -115,7 +115,7 @@ class CensusGeocode:
         url = self._geturl(searchtype=searchtype, returntype=returntype)
 
         try:
-            with requests.get(url, params=fields, timeout=timeout) as r:
+            with requests.get(url, params=fields, timeout=timeout, **kwargs) as r:
                 content = r.json()
                 if "addressMatches" in content.get("result", {}):
                     return AddressResult(content)
@@ -307,7 +307,7 @@ class CensusGeocode:
             )
             headers = {"Content-Type": form.content_type}
 
-            with requests.post(url, data=form, timeout=timeout, headers=headers) as r:
+            with requests.post(url, data=form, timeout=timeout, headers=headers, **kwargs) as r:
                 # return as list of dicts
                 return self._parse_batch_result(r.text, returntype)
 

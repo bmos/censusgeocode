@@ -100,18 +100,17 @@ class CensusGeocode:
             str | float | None,
         ],
         *,
-        returntype: ReturnType | None = "geographies",
-        timeout: int | None = DEFAULT_TIMEOUT,
+        returntype: ReturnType = "geographies",
+        timeout: int = DEFAULT_TIMEOUT,
+        layers: str | None = None,
         **kwargs,
     ) -> AddressResult | GeographyResult:
         """Fetch a response from the Geocoding API."""
         fields["vintage"] = self.vintage
         fields["benchmark"] = self.benchmark
-
         fields["format"] = "json"
-
-        if "layers" in kwargs:
-            fields["layers"] = kwargs["layers"]
+        if layers:
+            fields["layers"] = layers
 
         url = self._geturl(searchtype=searchtype, returntype=returntype)
 

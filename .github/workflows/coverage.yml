@@ -28,12 +28,12 @@ jobs:
       actions: read
 
     steps:
-      - uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2
+      - uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c
         with:
           disable-sudo: true
           egress-policy: audit
 
-      - uses: py-cov-action/python-coverage-comment-action@e623398c19eb3853a5572d4a516e10b15b5cefbc
+      - uses: py-cov-action/python-coverage-comment-action@a05be3d2e8a6272d3ef5fb2840ab20368bb2eb71
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_RUN_ID: ${{ github.event.workflow_run.id }}

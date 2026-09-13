@@ -17,7 +17,7 @@ import pytest
 import vcr
 
 from censusgeocode import CensusGeocode
-from censusgeocode.censusgeocode import GeographyResult
+from censusgeocode.censusgeocode import MAX_BATCH, GeographyResult
 
 
 @vcr.use_cassette("tests/fixtures/coordinates.yaml")
@@ -140,9 +140,9 @@ def test_addressbatch_file_not_found(cg: CensusGeocode, bad_file: Union[str, Pat
 
 
 def test_warning10k(cg: CensusGeocode) -> None:
-    """Sending more than 10,000 records to batch raises a warning."""
+    """addressbatch() raises a warning if asked to process more than 10,000 records."""
     warnings.simplefilter("error")
     result = []
-    with pytest.raises(UserWarning, match="Sending more than 10,000 records"):
-        result = cg.addressbatch({} for _ in range(10001))
+    with pytest.raises(UserWarning, match=f"Sending more than {format(MAX_BATCH, ',')} records"):
+        result = cg.addressbatch({} for _ in range(MAX_BATCH + 1))
     assert result == []

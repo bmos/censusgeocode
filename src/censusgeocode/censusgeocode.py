@@ -32,6 +32,7 @@ ResultType = Dict[str, Union[str, int, float, list, None]]
 DEFAULT_BENCHMARK = "Public_AR_Current"
 DEFAULT_VINTAGE = "Current_Current"
 DEFAULT_TIMEOUT = 12
+MAX_BATCH = 10_000
 
 
 class CensusGeocode:
@@ -457,11 +458,9 @@ class CensusGeocode:
             for i, row in enumerate(data, 1):
                 row.setdefault("id", i)
                 writer.writerow(row)
-                if i == 10001:
-                    warnings.warn(
-                        "Sending more than 10,000 records, the upper limit for the Census Geocoder. Request will likely fail.",
-                        stacklevel=2,
-                    )
+                if i == MAX_BATCH + 1:
+                    warn_msg = f"Sending more than {format(MAX_BATCH, ',')} records, the upper limit for the Census Geocoder. Request will likely fail."
+                    warnings.warn(warn_msg, stacklevel=2)
 
             f.seek(0)
 

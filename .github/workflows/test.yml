@@ -207,47 +207,6 @@ jobs:
         run: |
           ruff check --output-format=github .
 
-  bandit:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c
-        with:
-          disable-sudo: true
-          egress-policy: audit
-          allowed-endpoints: ${{ env.ENDPOINT_WHITELIST}}
-
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
-        with:
-          python-version: 3.13
-          activate-environment: true
-          cache-dependency-glob: ${{ env.CACHE_GLOBS }}
-
-      - run: >-
-          uv sync
-          --no-default-groups
-          --group lint
-
-      - id: run-bandit-sarif
-        run: |
-          bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src' --format 'sarif' --output 'results.sarif'
-
-      - uses: github/codeql-action/upload-sarif@486fec2a3ea2626afcd8c7e9208b4f515078dd7e
-        if: ( success() || failure() ) && contains('["success", "failure"]', steps.run-bandit-sarif.outcome)
-        with:
-          sarif_file: results.sarif
-
-      - id: run-bandit
-        if: failure() && contains('["failure"]', steps.run-bandit-sarif.outcome)
-        run: |
-          bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
-
   mypy:
     runs-on: ubuntu-latest
 

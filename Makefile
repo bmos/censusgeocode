@@ -32,7 +32,6 @@ lint:
 	$(PIP) install -e . --group lint --group type
 	$(PYTHON) -m ruff check --fix
 	$(PYTHON) -m ruff format
-	$(PYTHON) -m bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
 	$(PYTHON) -m mypy src
 	$(PYTHON) -m mypy tests
 

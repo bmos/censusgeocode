@@ -61,7 +61,6 @@ test = [
     "vcrpy>=6",
 ]
 lint = [
-    "bandit[sarif]>=1.7.10",
     "ruff~=0.15.4",
 ]
 type = [

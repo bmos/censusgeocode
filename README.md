@@ -1,13 +1,3 @@
-[![PyPI - Latest Version](https://img.shields.io/pypi/v/censusgeocode?label=PyPI)](https://pypi.org/project/censusgeocode/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/censusgeocode?label=Python+Support)](https://pypi.org/project/censusgeocode/)
-
-[![PyPI - Total Downloads](https://static.pepy.tech/personalized-badge/censusgeocode?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=BLUE&left_text=Total+PyPI+Downloads)](https://pepy.tech/projects/censusgeocode)
-[![PyPI - Monthly Downloads](https://static.pepy.tech/personalized-badge/censusgeocode?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=BLUE&left_text=Monthly+PyPI+Downloads)](https://pepy.tech/projects/censusgeocode)
-
-[![Build, Test, & Publish](https://img.shields.io/github/actions/workflow/status/fitnr/censusgeocode/publish.yml?branch=master&label=Build%2C%20Test%2C%20%26%20Publish)](https://github.com/fitnr/censusgeocode/actions/workflows/publish.yml)
-[![Python Checks](https://img.shields.io/github/actions/workflow/status/fitnr/censusgeocode/test.yml?branch=master&label=Python%20Checks)](https://github.com/fitnr/censusgeocode/actions/workflows/test.yml)
-[![Coverage](https://raw.githubusercontent.com/fitnr/censusgeocode/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/fitnr/censusgeocode/blob/python-coverage-comment-action-data/htmlcov/index.html)
-
 # Census Geocode
 
 Census Geocode is a light weight Python wrapper for the US Census [Geocoder API](http://geocoding.geo.census.gov/geocoder/), compatible with  Python 3. It comes packaged with a simple command line tool for geocoding an address to a longitude and latitude, or a batch file into a parsed address and coordinates.

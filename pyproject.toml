@@ -43,7 +43,7 @@ dependencies = [
 Homepage = "https://github.com/fitnr/censusgeocode"
 "Bug Tracker" = "https://github.com/fitnr/censusgeocode/issues"
 Repository = "https://github.com/fitnr/censusgeocode.git"
-Changelog = "https://github.com/fitnr/censusgeocode/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/fitnr/censusgeocode/blob/master/CHANGELOG.md"
 
 [dependency-groups]
 dev = [

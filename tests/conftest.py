@@ -1,3 +1,5 @@
+"""Fixtures for censusgeocode."""
+
 # This file is part of censusgeocode.
 # https://github.com/fitnr/censusgeocode
 
@@ -5,13 +7,12 @@
 # http://opensource.org/licenses/LGPL-3.0
 # Copyright (c) 2015-2026, Neil Freeman <contact@fakeisthenewreal.org>
 
-from .censusgeocode import CensusGeocode
+import pytest
 
-__version__ = "0.5.3"
+from censusgeocode import CensusGeocode
 
-cg = CensusGeocode()
 
-coordinates = cg.coordinates
-address = cg.address
-onelineaddress = cg.onelineaddress
-addressbatch = cg.addressbatch
+@pytest.fixture
+def cg():
+    """Provides an initialized CensusGeocode instance."""
+    return CensusGeocode()

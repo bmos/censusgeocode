@@ -125,6 +125,26 @@ def test_addressbatch(cg: CensusGeocode, batch_input: Union[str, Path]) -> None:
     assert resultdict_geo[3]["statefp"] == "36"
 
 
+@vcr.use_cassette("tests/fixtures/address-batch.yaml")
+def test_addressbatch_file_stream(cg: CensusGeocode) -> None:
+    """addressbatch() method works with file streams, closing them correctly."""
+    f = Path("tests/fixtures/batch.csv").open("rb")
+    result = cg.addressbatch(f, returntype="locations")
+    assert isinstance(result, list)
+    resultdict = {int(res["id"]): res for res in result}
+    assert resultdict[3]["parsed"] == "3 GRAMERCY PARK W, NEW YORK, NY, 10003"
+    assert resultdict[2]["match"] is False
+    f.close()
+
+    f = Path("tests/fixtures/batch.csv").open("rb")
+    result_geo = cg.addressbatch(f, returntype="geographies")
+    assert isinstance(result_geo, list)
+    resultdict_geo = {int(res["id"]): res for res in result_geo}
+    assert resultdict_geo[3]["tigerlineid"] == "59653655"
+    assert resultdict_geo[3]["statefp"] == "36"
+    f.close()
+
+
 @pytest.mark.parametrize(
     "bad_file",
     [r"tests/fixtures/nonexistent.csv", Path("tests/fixtures/nonexistent.csv")],
@@ -139,10 +159,19 @@ def test_addressbatch_file_not_found(cg: CensusGeocode, bad_file: Union[str, Pat
         cg.addressbatch(bad_file, returntype="geographies")
 
 
-def test_warning10k(cg: CensusGeocode) -> None:
+def test_addressbatch_warning10k(cg: CensusGeocode) -> None:
     """addressbatch() raises a warning if asked to process more than 10,000 records."""
     warnings.simplefilter("error")
     result = []
     with pytest.raises(UserWarning, match=f"Sending more than {format(MAX_BATCH, ',')} records"):
         result = cg.addressbatch({} for _ in range(MAX_BATCH + 1))
+    assert result == []
+
+
+def test_addressbatch_incorrect_input_type(cg: CensusGeocode) -> None:
+    """addressbatch() raises a warning if given the wrong type of data."""
+    warnings.simplefilter("error")
+    result = []
+    with pytest.raises(TypeError, match="Expected a file-like object, a path object or string, or a list of dicts"):
+        result = cg.addressbatch(284_289)
     assert result == []

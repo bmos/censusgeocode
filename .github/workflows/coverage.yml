@@ -23,9 +23,9 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      pull-requests: write
+      actions: read # Download the comment artifact from the triggering CI run
       contents: write
-      actions: read
+      pull-requests: write # Post the comment, and edit it on later runs
 
     steps:
       - uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c

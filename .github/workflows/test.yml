@@ -53,7 +53,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c
@@ -99,8 +99,8 @@ jobs:
       - pytest
 
     permissions:
-      pull-requests: write
       contents: write
+      pull-requests: write
 
     steps:
       - uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c
@@ -164,6 +164,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
+      contents: read
       security-events: write
 
     steps:
@@ -210,6 +211,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
+      contents: read
       security-events: write
 
     steps:

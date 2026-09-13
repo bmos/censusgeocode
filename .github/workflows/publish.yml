@@ -122,6 +122,7 @@ jobs:
     environment: release
 
     permissions:
+      contents: read
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
 
     steps:

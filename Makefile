@@ -10,7 +10,7 @@ PIP = $(PYTHON) -m pip
 BUILD = $(PYTHON) -m build
 TWINE = $(PYTHON) -m twine
 
-.PHONY: help install dev-install test lint format build upload clean
+.PHONY: help install lint test build upload clean
 
 help:
 	@echo "Usage: make [target]"
@@ -26,8 +26,8 @@ install:
 
 lint:
 	$(PIP) install -e . --group lint --group type
-	$(PYTHON) -m ruff format
 	$(PYTHON) -m ruff check --fix
+	$(PYTHON) -m ruff format
 	$(PYTHON) -m bandit --confidence-level 'medium' --severity-level 'medium' --recursive 'src'
 	$(PYTHON) -m mypy src
 	$(PYTHON) -m mypy tests

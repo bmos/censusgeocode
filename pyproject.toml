@@ -123,13 +123,3 @@ source = [
 
 [tool.coverage.report]
 show_missing = true
-exclude_lines = [
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "return NotImplemented",
-    "raise",
-    "if (False|TYPE_CHECKING)",
-    'if __name__ == "__main__":',
-    "main\\(\\)",
-    "logger.",
-]

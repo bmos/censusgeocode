@@ -95,7 +95,6 @@ docstring-code-line-length = 80
 
 [[tool.mypy.overrides]]
 module = [
-    "censusgeocode.*",
     "requests_toolbelt.*",
     "vcr",
 ]
